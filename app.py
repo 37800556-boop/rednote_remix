@@ -241,6 +241,9 @@ def init_session_state():
     if "generating_image" not in st.session_state:
         st.session_state.generating_image = False
 
+    if "config_panel_open" not in st.session_state:
+        st.session_state.config_panel_open = False
+
 
 init_session_state()
 
@@ -683,11 +686,12 @@ with st.form("url_form", clear_on_submit=True):
 
 # 悬浮配置按钮
 st.markdown('<div class="config-toggle-wrapper">', unsafe_allow_html=True)
-config_shown = st.button("⚙", key="config_toggle")
+if st.button("⚙", key="config_toggle"):
+    st.session_state.config_panel_open = not st.session_state.config_panel_open
 st.markdown("</div>", unsafe_allow_html=True)
 
 # 配置面板（点击按钮后显示）
-if config_shown:
+if st.session_state.config_panel_open:
     with st.expander("🔑 API 配置", expanded=True):
         # DeepSeek API Key
         deepseek_key = st.text_input(
