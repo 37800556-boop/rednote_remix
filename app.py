@@ -338,6 +338,9 @@ def render_gallery(images, title="图片"):
                 # 下载失败，使用占位图
                 base64_images.append(None)
 
+    # 存储 base64 图片到 session_state，供参考图预览使用
+    st.session_state.base64_images = base64_images
+
     # 使用 HTML 显示 base64 图片，仿手机屏幕比例 + 悬浮放大
     # 竖长比例(约3:4)，object-fit:cover 填充，悬浮放大2.8倍
     # 使用纯 HTML 布局填满宽度
@@ -1002,7 +1005,15 @@ if st.session_state.current_note:
                 if ref_selection != "全部重新生成":
                     idx = int(ref_selection.split()[1]) - 1
                     st.session_state.selected_reference_image = note.images[idx]
-                    st.image(note.images[idx], width=100, caption="参考图预览")
+                    # 使用 base64 图片显示，避免防盗链问题
+                    if hasattr(st.session_state, 'base64_images') and st.session_state.base64_images and idx < len(st.session_state.base64_images):
+                        base64_img = st.session_state.base64_images[idx]
+                        if base64_img:
+                            st.markdown(f'<img src="{base64_img}" style="width:100px;height:130px;object-fit:contain;border-radius:6px;background:#f5f5f5;">', unsafe_allow_html=True)
+                        else:
+                            st.warning("参考图加载失败")
+                    else:
+                        st.warning("请先重新解析笔记以加载图片")
                 else:
                     if "selected_reference_image" in st.session_state:
                         del st.session_state.selected_reference_image
