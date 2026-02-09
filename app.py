@@ -49,17 +49,10 @@ def save_config_to_cookies(config_data):
     """保存配置到 cookies - 返回 JavaScript 代码"""
     return f"""
 <script>
-// 设置 cookies，有效期 30 天
-const days = 30;
-const date = new Date();
-date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-
+// 设置到 localStorage
 const config = {json.dumps(config_data)};
-
-for (const [key, value] of Object.entries(config)) {{
-    document.cookie = key + '=' + encodeURIComponent(value) + ';expires=' + date.toUTCString() + ';path=/';
-    console.log('已设置 cookie:', key);
-}}
+localStorage.setItem('rednote_remix_config', JSON.stringify(config));
+console.log('配置已保存到 localStorage');
 </script>
 """
 
@@ -834,13 +827,15 @@ if st.session_state.config_panel_open:
             st.session_state.xhs_cookies = xhs_cookies
 
         # 保存配置按钮
-        col_save, col_clear = st.columns(2)
+        col_save, col_load, col_clear = st.columns(3)
         with col_save:
-            save_clicked = st.button("💾 保存到浏览器", use_container_width=True, key="save_config_btn")
+            save_clicked = st.button("💾 保存", use_container_width=True, key="save_config_btn")
+        with col_load:
+            load_clicked = st.button("📥 加载", use_container_width=True, key="load_config_btn")
         with col_clear:
-            clear_clicked = st.button("🗑️ 清除保存", use_container_width=True, key="clear_config_btn")
+            clear_clicked = st.button("🗑️ 清除", use_container_width=True, key="clear_config_btn")
 
-        # 保存按钮 - 将配置保存到 cookies
+        # 保存按钮 - 保存到 localStorage
         if save_clicked:
             config_data = {
                 "deepseek_api_key": st.session_state.deepseek_api_key,
@@ -848,30 +843,72 @@ if st.session_state.config_panel_open:
                 "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
                 "xhs_cookies": st.session_state.xhs_cookies
             }
-            # 保存到 cookies (使用 JavaScript)
+            # 保存到 localStorage (使用 JavaScript)
             cookie_js = save_config_to_cookies(config_data)
             st.markdown(cookie_js, unsafe_allow_html=True)
-            st.success("✓ 配置已保存到浏览器，下次访问自动加载")
+            st.success("✓ 配置已保存到浏览器")
+
+        # 加载按钮 - 从 localStorage 加载并填充
+        if load_clicked:
+            st.markdown("""
+<script>
+// 从 localStorage 加载配置并填充到输入框
+const config = JSON.parse(localStorage.getItem('rednote_remix_config') || '{}');
+
+if (config.deepseek_api_key) {{
+    const deepseekInputs = document.querySelectorAll('input[placeholder*="DeepSeek"], input[aria-label*="DeepSeek"]');
+    if (deepseekInputs.length > 0) {{
+        deepseekInputs[0].value = config.deepseek_api_key;
+        deepseekInputs[0].dispatchEvent(new Event('input', {{ bubbles: true }}));
+        deepseekInputs[0].dispatchEvent(new Event('change', {{ bubbles: true }}));
+    }}
+}}
+
+if (config.jimeng_api_key) {{
+    const allPasswordInputs = document.querySelectorAll('input[type="password"]');
+    if (allPasswordInputs.length >= 2) {{
+        allPasswordInputs[1].value = config.jimeng_api_key;
+        allPasswordInputs[1].dispatchEvent(new Event('input', {{ bubbles: true }}));
+        allPasswordInputs[1].dispatchEvent(new Event('change', {{ bubbles: true }}));
+    }}
+}}
+
+if (config.jimeng_endpoint_id) {{
+    const endpointInputs = document.querySelectorAll('input[type="text"]');
+    endpointInputs.forEach(function(input) {{
+        if (input.placeholder?.includes('Endpoint') || input.ariaLabel?.includes('Endpoint')) {{
+            input.value = config.jimeng_endpoint_id;
+            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        }}
+    }});
+}}
+
+if (config.xhs_cookies) {{
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(function(area) {{
+        if (area.placeholder?.includes('Cookie') || area.ariaLabel?.includes('Cookie')) {{
+            area.value = config.xhs_cookies;
+            area.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            area.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        }}
+    }});
+}}
+
+console.log('已从 localStorage 加载配置');
+</script>
+""", unsafe_allow_html=True)
+            st.info("✓ 配置已加载，请确认上方输入框中的值")
 
         # 清除按钮
         if clear_clicked:
-            # 清除 cookies
-            cookies = st.context.cookies
-            if "deepseek_api_key" in cookies:
-                del cookies["deepseek_api_key"]
-            if "jimeng_api_key" in cookies:
-                del cookies["jimeng_api_key"]
-            if "jimeng_endpoint_id" in cookies:
-                del cookies["jimeng_endpoint_id"]
-            if "xhs_cookies" in cookies:
-                del cookies["xhs_cookies"]
-            # 清除 session_state
-            st.session_state.deepseek_api_key = ""
-            st.session_state.jimeng_api_key = ""
-            st.session_state.jimeng_endpoint_id = ""
-            st.session_state.xhs_cookies = ""
+            st.markdown("""
+<script>
+localStorage.removeItem('rednote_remix_config');
+console.log('已清除本地存储的配置');
+</script>
+""", unsafe_allow_html=True)
             st.success("✓ 已清除浏览器保存的配置")
-            st.rerun()
 
         # 从 cookies 加载配置
         if "config_loaded" not in st.session_state:
