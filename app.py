@@ -304,59 +304,26 @@ def render_gallery(images, title="图片"):
 
     count = len(images)
 
-    # 使用图片代理服务绕过防盗链
-    def get_proxy_url(url):
-        return f"https://imageproxy.pimg.tw/transform?format=webp&url={url}"
-
+    # 使用 Streamlit 内置的图片显示功能
     if count == 1:
         # 单图：大图显示
-        cols = st.columns(1)
-        with cols[0]:
-            st.markdown(f"""
-<div class="gallery-img-wrapper" style="text-align:center;">
-    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:100%;max-width:400px;height:auto;" alt="图片1">
-</div>
-""", unsafe_allow_html=True)
+        st.image(images[0], use_container_width=True, caption="图片1")
     elif count == 2:
         # 两图：左右排列
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:100%;height:180px;object-fit:cover;" alt="图片1">
-</div>
-""", unsafe_allow_html=True)
+            st.image(images[0], use_container_width=True, caption="图片1")
         with col2:
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[1])}" style="width:100%;height:180px;object-fit:cover;" alt="图片2">
-</div>
-""", unsafe_allow_html=True)
+            st.image(images[1], use_container_width=True, caption="图片2")
     elif count == 4:
         # 四图：2x2网格
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:48%;height:140px;object-fit:cover;" alt="图片1">
-</div>
-""", unsafe_allow_html=True)
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[1])}" style="width:48%;height:140px;object-fit:cover;" alt="图片2">
-</div>
-""", unsafe_allow_html=True)
+            st.image(images[0], use_container_width=True, caption="图片1")
+            st.image(images[1], use_container_width=True, caption="图片2")
         with col2:
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[2])}" style="width:48%;height:140px;object-fit:cover;" alt="图片3">
-</div>
-""", unsafe_allow_html=True)
-            st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[3])}" style="width:48%;height:140px;object-fit:cover;" alt="图片4">
-</div>
-""", unsafe_allow_html=True)
+            st.image(images[2], use_container_width=True, caption="图片3")
+            st.image(images[3], use_container_width=True, caption="图片4")
     else:
         # 默认：3列九宫格布局
         rows = (count + 2) // 3
@@ -367,11 +334,7 @@ def render_gallery(images, title="图片"):
                 idx = row * 3 + col
                 if idx < count:
                     with cols[col]:
-                        st.markdown(f"""
-<div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{get_proxy_url(images[idx])}" style="width:100%;height:110px;object-fit:cover;" alt="图片{idx + 1}">
-</div>
-""", unsafe_allow_html=True)
+                        st.image(images[idx], use_container_width=True, caption=f"图片{idx + 1}")
 
 
 # ====================================
