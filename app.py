@@ -1005,11 +1005,11 @@ if st.session_state.current_note:
                 if ref_selection != "全部重新生成":
                     idx = int(ref_selection.split()[1]) - 1
                     st.session_state.selected_reference_image = note.images[idx]
-                    # 使用 base64 图片显示，避免防盗链问题
+                    # 使用 base64 图片显示，避免防盗链问题，添加悬浮放大效果
                     if hasattr(st.session_state, 'base64_images') and st.session_state.base64_images and idx < len(st.session_state.base64_images):
                         base64_img = st.session_state.base64_images[idx]
                         if base64_img:
-                            st.markdown(f'<img src="{base64_img}" style="width:100px;height:130px;object-fit:contain;border-radius:6px;background:#f5f5f5;">', unsafe_allow_html=True)
+                            st.markdown(f'<img class="gallery-hover-img" src="{base64_img}" style="width:100px;height:130px;">', unsafe_allow_html=True)
                         else:
                             st.warning("参考图加载失败")
                     else:
