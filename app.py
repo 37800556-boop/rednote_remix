@@ -2,7 +2,7 @@
 RedNote Remix - 小红书二创工具
 主应用程序入口
 
-极简主义 UI 设计 - 类似 Genspark/Flowith 风格
+极简主义 UI 设计 - 类似 Gemini 风格
 """
 import streamlit as st
 import logging
@@ -22,6 +22,11 @@ from utils import (
     clean_text, generate_image_prompt, truncate_text,
     format_display_content, validate_url, is_xiaohongshu_url
 )
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # ====================================
 # CSS 注入 - 极简现代风格
@@ -403,26 +408,142 @@ with st.sidebar:
 # 主界面 - 极简居中布局
 # ====================================
 
-# 标题区域
+# 主容器 - Gemini 风格
 st.markdown("""
-# RedNote Remix
-<p style="text-align: center; color: #999; font-size: 0.95rem; margin-bottom: 2rem;">
-    AI 驱动的小红书内容二创工具
-</p>
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem 0;">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <h1 style="font-size: 3rem; font-weight: 500; color: #1a1a1a; margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+            你的小红书私人助手
+        </h1>
+    </div>
+</div>
 """, unsafe_allow_html=True)
 
-# URL 输入区域 - 居中、大输入框
-col_input, col_btn = st.columns([5, 1])
-with col_input:
+# Gemini 风格输入框 CSS
+st.markdown("""
+<style>
+    /* 表单容器 */
+    .stForm {
+        max-width: 680px;
+        margin: 0 auto;
+    }
+
+    /* 输入框外层 - 渐变背景 */
+    .stForm [data-testid="stTextArea"] > div {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%) !important;
+        border-radius: 26px !important;
+        padding: 5px !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+    }
+
+    /* 输入框内层 - 白色背景 */
+    .stForm [data-testid="stTextArea"] > div > div {
+        background: white !important;
+        border-radius: 22px !important;
+        border: none !important;
+    }
+
+    /* 文本区域 */
+    .stForm [data-testid="stTextArea"] textarea {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+        color: #1a1a1a !important;
+        padding: 14px 20px !important;
+    }
+
+    .stForm [data-testid="stTextArea"] textarea:focus {
+        box-shadow: none !important;
+    }
+
+    .stForm [data-testid="stTextArea"] textarea::placeholder {
+        color: #9ca3af !important;
+    }
+
+    /* 提交按钮 */
+    .stForm [data-testid="stFormSubmitButton"] > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 10px 24px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.3) !important;
+    }
+
+    .stForm [data-testid="stFormSubmitButton"] > button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 15px rgba(102,126,234,0.4) !important;
+    }
+
+    /* 悬浮配置按钮 - 左下角 */
+    .config-toggle-wrapper {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 999;
+    }
+
+    .config-toggle-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #666;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        cursor: pointer;
+        font-size: 20px;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .config-toggle-btn:hover {
+        background: #555;
+    }
+
+    /* 隐藏配置按钮的默认样式 */
+    .config-toggle-wrapper [data-testid="stVerticalBlock"] {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .config-toggle-wrapper .stButton {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* 配置面板样式 */
+    .config-expander-section {
+        position: fixed;
+        bottom: 80px;
+        left: 20px;
+        z-index: 998;
+        max-width: 400px;
+    }
+
+    /* 隐藏侧边栏 */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 使用 Form 组件将输入框和按钮组合在一起
+with st.form("url_form", clear_on_submit=True):
     url_input = st.text_area(
         "输入链接",
         placeholder="粘贴小红书链接或分享内容...",
-        height=80,
+        height=70,
         label_visibility="collapsed"
     )
-with col_btn:
-    st.write("")
-    if st.button("开始", use_container_width=True):
+    submitted = st.form_submit_button("开始解析", use_container_width=True)
+
+    if submitted:
         extracted_url = extract_url_from_input(url_input)
 
         if extracted_url:
@@ -440,6 +561,67 @@ with col_btn:
                 st.warning("请输入有效的小红书链接")
         else:
             st.warning("未检测到链接")
+
+# 悬浮配置按钮
+st.markdown('<div class="config-toggle-wrapper">', unsafe_allow_html=True)
+config_shown = st.button("⚙", key="config_toggle")
+st.markdown("</div>", unsafe_allow_html=True)
+
+# 配置面板（点击按钮后显示）
+if config_shown:
+    with st.expander("🔑 API 配置", expanded=True):
+        # DeepSeek API Key
+        deepseek_key = st.text_input(
+            "DeepSeek API Key",
+            type="password",
+            value=st.session_state.deepseek_api_key
+        )
+        st.session_state.deepseek_api_key = deepseek_key
+
+        # Jimeng API Key
+        jimeng_key = st.text_input(
+            "Jimeng API Key",
+            type="password",
+            value=st.session_state.jimeng_api_key
+        )
+        st.session_state.jimeng_api_key = jimeng_key
+
+        # Jimeng Endpoint ID
+        jimeng_endpoint_id = st.text_input(
+            "Jimeng Endpoint ID",
+            value=st.session_state.jimeng_endpoint_id
+        )
+        st.session_state.jimeng_endpoint_id = jimeng_endpoint_id
+
+        # 小红书 Cookie
+        with st.expander("🍪 Cookie (可选)"):
+            xhs_cookies = st.text_area(
+                "小红书 Cookie",
+                value=st.session_state.xhs_cookies,
+                height=60
+            )
+            st.session_state.xhs_cookies = xhs_cookies
+
+        # 状态指示
+        ds_ready = bool(st.session_state.deepseek_api_key)
+        jm_ready = bool(st.session_state.jimeng_api_key and st.session_state.jimeng_endpoint_id)
+
+        st.markdown(f"""
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <span style="font-size: 12px;">DeepSeek:</span>
+                <span style="color: {'#10b981' if ds_ready else '#f59e0b'}; font-size: 12px;">
+                    {'● 已配置' if ds_ready else '● 未配置'}
+                </span>
+            </div>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <span style="font-size: 12px;">Jimeng:</span>
+                <span style="color: {'#10b981' if jm_ready else '#f59e0b'}; font-size: 12px;">
+                    {'● 已配置' if jm_ready else '● 未配置'}
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ====================================
 # 内容区域 - 左右分栏
@@ -478,10 +660,10 @@ if st.session_state.current_note:
             st.caption(meta_info)
 
     # -------------------------------
-    # 右列：二创控制 - 简化版
+    # 右列：施展魔法 - 简化版
     # -------------------------------
     with right_col:
-        st.markdown("### ✨ 二创")
+        st.markdown("### ✨ 施展魔法")
 
         # 单一操作选择器
         action_type = st.selectbox(
@@ -662,7 +844,7 @@ if st.session_state.current_note:
             result = st.session_state.remixed_content
 
             st.markdown("---")
-            st.markdown("### 📝 生成结果")
+            st.markdown("### 📝 魔法成果")
 
             # 新标题
             if result.new_title:
