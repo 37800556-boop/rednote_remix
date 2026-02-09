@@ -814,7 +814,8 @@ if st.session_state.config_panel_open:
         deepseek_key = st.text_input(
             "DeepSeek API Key",
             type="password",
-            value=st.session_state.deepseek_api_key
+            value=st.session_state.deepseek_api_key,
+            key="config_deepseek_key"
         )
         st.session_state.deepseek_api_key = deepseek_key
 
@@ -822,14 +823,16 @@ if st.session_state.config_panel_open:
         jimeng_key = st.text_input(
             "Jimeng API Key",
             type="password",
-            value=st.session_state.jimeng_api_key
+            value=st.session_state.jimeng_api_key,
+            key="config_jimeng_key"
         )
         st.session_state.jimeng_api_key = jimeng_key
 
         # Jimeng Endpoint ID
         jimeng_endpoint_id = st.text_input(
             "Jimeng Endpoint ID",
-            value=st.session_state.jimeng_endpoint_id
+            value=st.session_state.jimeng_endpoint_id,
+            key="config_endpoint_id"
         )
         st.session_state.jimeng_endpoint_id = jimeng_endpoint_id
 
@@ -838,7 +841,8 @@ if st.session_state.config_panel_open:
             xhs_cookies = st.text_area(
                 "小红书 Cookie",
                 value=st.session_state.xhs_cookies,
-                height=60
+                height=60,
+                key="config_xhs_cookies"
             )
             st.session_state.xhs_cookies = xhs_cookies
 
