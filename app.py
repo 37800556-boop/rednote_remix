@@ -21,26 +21,29 @@ load_dotenv()
 # ====================================
 def get_config_from_cookies():
     """从 cookies 读取配置"""
-    cookies = st.context.cookies
-    config = {}
+    try:
+        cookies = st.cookies
+        config = {}
 
-    deepseek_key = cookies.get("deepseek_api_key")
-    if deepseek_key:
-        config["deepseek_api_key"] = deepseek_key
+        deepseek_key = cookies.get("deepseek_api_key")
+        if deepseek_key:
+            config["deepseek_api_key"] = deepseek_key
 
-    jimeng_key = cookies.get("jimeng_api_key")
-    if jimeng_key:
-        config["jimeng_api_key"] = jimeng_key
+        jimeng_key = cookies.get("jimeng_api_key")
+        if jimeng_key:
+            config["jimeng_api_key"] = jimeng_key
 
-    endpoint_id = cookies.get("jimeng_endpoint_id")
-    if endpoint_id:
-        config["jimeng_endpoint_id"] = endpoint_id
+        endpoint_id = cookies.get("jimeng_endpoint_id")
+        if endpoint_id:
+            config["jimeng_endpoint_id"] = endpoint_id
 
-    xhs_cookies = cookies.get("xhs_cookies")
-    if xhs_cookies:
-        config["xhs_cookies"] = xhs_cookies
+        xhs_cookies = cookies.get("xhs_cookies")
+        if xhs_cookies:
+            config["xhs_cookies"] = xhs_cookies
 
-    return config
+        return config
+    except:
+        return {}
 
 def save_config_to_cookies(config_data):
     """保存配置到 cookies - 返回 JavaScript 代码"""
