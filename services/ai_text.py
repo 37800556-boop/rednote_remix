@@ -73,7 +73,7 @@ class DeepSeekGenerator(TextGenerator):
                 base_url=self.base_url
             )
 
-    def generate(self, original_title: str, original_content: str, style: RemixStyle) -> Dict[str, str]:
+    def generate(self, original_title: str, original_content: str, style: RemixStyle, model: str = "deepseek-chat") -> Dict[str, str]:
         """
         使用 DeepSeek 生成改写文本
 
@@ -81,6 +81,7 @@ class DeepSeekGenerator(TextGenerator):
             original_title: 原标题
             original_content: 原文内容
             style: 改写风格配置
+            model: 模型名称 (deepseek-chat, deepseek-reasoner)
 
         Returns:
             包含 new_title 和 new_content 的字典
@@ -129,7 +130,7 @@ class DeepSeekGenerator(TextGenerator):
             logger.info(f"调用 DeepSeek API 生成内容，风格: {style.style_type}")
 
             response = self._client.chat.completions.create(
-                model="deepseek-chat",
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

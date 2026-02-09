@@ -78,13 +78,14 @@ class JimengGenerator(ImageGenerator):
             "Content-Type": "application/json"
         }
 
-    def generate(self, prompt: str, count: int = 1) -> List[str]:
+    def generate(self, prompt: str, count: int = 1, reference_image: Optional[str] = None) -> List[str]:
         """
         使用火山引擎即梦 API 生成图片
 
         Args:
             prompt: 图片生成提示词
             count: 生成图片数量
+            reference_image: 参考图片 URL（用于图生图）
 
         Returns:
             图片 URL 列表
@@ -114,6 +115,11 @@ class JimengGenerator(ImageGenerator):
                     "n": 1,  # 每次请求生成 1 张图片
                     "size": "1920x1920"  # 图片尺寸 - 至少需要 3,686,400 像素
                 }
+
+                # 如果提供了参考图片，添加到请求中（图生图）
+                if reference_image:
+                    payload["image"] = reference_image
+                    logger.info(f"使用参考图片进行图生图: {reference_image}")
 
                 logger.debug(f"发送请求到: {self.api_endpoint}")
                 logger.debug(f"请求参数: {payload}")

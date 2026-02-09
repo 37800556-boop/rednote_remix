@@ -40,11 +40,11 @@ class RemixStyle(BaseModel):
 class RemixedContent(BaseModel):
     """改写后的内容模型"""
     original_title: str = Field(description="原标题")
-    new_title: str = Field(description="新标题")
+    new_title: str = Field(default="", description="新标题")
     original_content: str = Field(description="原文内容")
-    new_content: str = Field(description="新内容")
+    new_content: str = Field(default="", description="新内容")
     generated_images: List[str] = Field(default_factory=list, description="AI生成的图片URL列表")
-    style_used: RemixStyle = Field(description="使用的改写风格")
+    style_used: Optional[RemixStyle] = Field(default=None, description="使用的改写风格")
     created_at: datetime = Field(default_factory=datetime.now, description="生成时间")
 
 
