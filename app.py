@@ -826,93 +826,64 @@ if st.session_state.config_panel_open:
             )
             st.session_state.xhs_cookies = xhs_cookies
 
-        # 保存配置按钮
-        col_save, col_load, col_clear = st.columns(3)
-        with col_save:
-            save_clicked = st.button("💾 保存", use_container_width=True, key="save_config_btn")
-        with col_load:
-            load_clicked = st.button("📥 加载", use_container_width=True, key="load_config_btn")
+        # 配置操作按钮
+        col_export, col_import, col_clear = st.columns(3)
+        with col_export:
+            export_clicked = st.button("📤 导出", use_container_width=True, key="export_config_btn")
+        with col_import:
+            import_clicked = st.button("📥 导入", use_container_width=True, key="import_config_btn")
         with col_clear:
             clear_clicked = st.button("🗑️ 清除", use_container_width=True, key="clear_config_btn")
 
-        # 保存按钮 - 保存到 localStorage
-        if save_clicked:
+        # 导出配置 - 生成配置文本供用户复制
+        if export_clicked:
             config_data = {
                 "deepseek_api_key": st.session_state.deepseek_api_key,
                 "jimeng_api_key": st.session_state.jimeng_api_key,
                 "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
                 "xhs_cookies": st.session_state.xhs_cookies
             }
-            # 保存到 localStorage (使用 JavaScript)
-            cookie_js = save_config_to_cookies(config_data)
-            st.markdown(cookie_js, unsafe_allow_html=True)
-            st.success("✓ 配置已保存到浏览器")
+            config_json = json.dumps(config_data, ensure_ascii=False, indent=2)
+            st.text_area("复制下方配置代码保存到本地：", config_json, height=150, key="config_export")
+            st.success("✓ 配置已生成，请复制保存")
 
-        # 加载按钮 - 从 localStorage 加载并填充
-        if load_clicked:
-            st.markdown("""
+            # 同时保存到 localStorage
+            st.markdown(f"""
 <script>
-// 从 localStorage 加载配置并填充到输入框
-const config = JSON.parse(localStorage.getItem('rednote_remix_config') || '{}');
-
-if (config.deepseek_api_key) {{
-    const deepseekInputs = document.querySelectorAll('input[placeholder*="DeepSeek"], input[aria-label*="DeepSeek"]');
-    if (deepseekInputs.length > 0) {{
-        deepseekInputs[0].value = config.deepseek_api_key;
-        deepseekInputs[0].dispatchEvent(new Event('input', {{ bubbles: true }}));
-        deepseekInputs[0].dispatchEvent(new Event('change', {{ bubbles: true }}));
-    }}
-}}
-
-if (config.jimeng_api_key) {{
-    const allPasswordInputs = document.querySelectorAll('input[type="password"]');
-    if (allPasswordInputs.length >= 2) {{
-        allPasswordInputs[1].value = config.jimeng_api_key;
-        allPasswordInputs[1].dispatchEvent(new Event('input', {{ bubbles: true }}));
-        allPasswordInputs[1].dispatchEvent(new Event('change', {{ bubbles: true }}));
-    }}
-}}
-
-if (config.jimeng_endpoint_id) {{
-    const endpointInputs = document.querySelectorAll('input[type="text"]');
-    endpointInputs.forEach(function(input) {{
-        if (input.placeholder?.includes('Endpoint') || input.ariaLabel?.includes('Endpoint')) {{
-            input.value = config.jimeng_endpoint_id;
-            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-        }}
-    }});
-}}
-
-if (config.xhs_cookies) {{
-    const textareas = document.querySelectorAll('textarea');
-    textareas.forEach(function(area) {{
-        if (area.placeholder?.includes('Cookie') || area.ariaLabel?.includes('Cookie')) {{
-            area.value = config.xhs_cookies;
-            area.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            area.dispatchEvent(new Event('change', {{ bubbles: true }}));
-        }}
-    }});
-}}
-
-console.log('已从 localStorage 加载配置');
+localStorage.setItem('rednote_remix_config', JSON.stringify({json.dumps(config_data)}));
+console.log('配置已保存到 localStorage');
 </script>
 """, unsafe_allow_html=True)
-            st.info("✓ 配置已加载，请确认上方输入框中的值")
 
-        # 清除按钮
+        # 导入配置 - 从粘贴的配置代码加载
+        if import_clicked:
+            imported_config = st.text_area("粘贴配置代码：", height=100, key="config_import")
+            if st.button("确认导入", key="confirm_import"):
+                try:
+                    config_data = json.loads(imported_config)
+                    st.session_state.deepseek_api_key = config_data.get("deepseek_api_key", "")
+                    st.session_state.jimeng_api_key = config_data.get("jimeng_api_key", "")
+                    st.session_state.jimeng_endpoint_id = config_data.get("jimeng_endpoint_id", "")
+                    st.session_state.xhs_cookies = config_data.get("xhs_cookies", "")
+                    st.success("✓ 配置已导入")
+                    st.rerun()
+                except json.JSONDecodeError:
+                    st.error("❌ 配置代码格式错误，请检查")
+
+        # 清除配置
         if clear_clicked:
+            st.session_state.deepseek_api_key = ""
+            st.session_state.jimeng_api_key = ""
+            st.session_state.jimeng_endpoint_id = ""
+            st.session_state.xhs_cookies = ""
             st.markdown("""
 <script>
 localStorage.removeItem('rednote_remix_config');
 console.log('已清除本地存储的配置');
 </script>
 """, unsafe_allow_html=True)
-            st.success("✓ 已清除浏览器保存的配置")
-
-        # 从 cookies 加载配置
-        if "config_loaded" not in st.session_state:
-            st.session_state.config_loaded = False
+            st.success("✓ 已清除配置")
+            st.rerun()
 
         # 状态指示
         ds_ready = bool(st.session_state.deepseek_api_key)
