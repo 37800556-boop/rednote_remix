@@ -582,16 +582,15 @@ st.markdown("""
     .gallery-hover-img {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         cursor: pointer;
-        object-fit: cover;
+        object-fit: contain;
+        background: #f5f5f5;
     }
 
     .gallery-hover-img:hover {
-        transform: scale(2.5);
+        transform: scale(2);
         z-index: 100;
         box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        object-fit: contain;
         background: #fff;
-        border-radius: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
