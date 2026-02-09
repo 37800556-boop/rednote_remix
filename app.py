@@ -251,7 +251,7 @@ def extract_url_from_input(user_input: str) -> Optional[str]:
     if not user_input:
         return None
 
-    pattern = r'(https?://[a-zA-Z0-9.=&_%/-]+)'
+    pattern = r'(https?://[a-zA-Z0-9.=&_%/?-]+)'
     match = re.search(pattern, user_input)
 
     if match:
