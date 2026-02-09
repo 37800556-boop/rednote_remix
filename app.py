@@ -43,9 +43,22 @@ def get_config_from_cookies():
     return config
 
 def save_config_to_cookies(config_data):
-    """保存配置到 cookies"""
-    for key, value in config_data.items():
-        st.context.cookies[key] = value
+    """保存配置到 cookies - 返回 JavaScript 代码"""
+    return f"""
+<script>
+// 设置 cookies，有效期 30 天
+const days = 30;
+const date = new Date();
+date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+
+const config = {json.dumps(config_data)};
+
+for (const [key, value] of Object.entries(config)) {{
+    document.cookie = key + '=' + encodeURIComponent(value) + ';expires=' + date.toUTCString() + ';path=/';
+    console.log('已设置 cookie:', key);
+}}
+</script>
+"""
 
 # ====================================
 # 自动安装 Playwright 浏览器（云端环境）
@@ -832,8 +845,9 @@ if st.session_state.config_panel_open:
                 "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
                 "xhs_cookies": st.session_state.xhs_cookies
             }
-            # 保存到 cookies
-            save_config_to_cookies(config_data)
+            # 保存到 cookies (使用 JavaScript)
+            cookie_js = save_config_to_cookies(config_data)
+            st.markdown(cookie_js, unsafe_allow_html=True)
             st.success("✓ 配置已保存到浏览器，下次访问自动加载")
 
         # 清除按钮
