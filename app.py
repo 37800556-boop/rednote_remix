@@ -297,6 +297,29 @@ def extract_url_from_input(user_input: str) -> Optional[str]:
 # ====================================
 # 图片画廊渲染函数
 # ====================================
+import requests
+import io
+import base64
+
+def fetch_image_as_base64(url, timeout=10):
+    """下载图片并转换为 base64"""
+    try:
+        # 模拟浏览器请求，绕过防盗链
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://www.xiaohongshu.com/',
+            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+        }
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+
+        # 转换为 base64
+        image_data = base64.b64encode(response.content).decode('utf-8')
+        return f"data:image/jpeg;base64,{image_data}"
+    except Exception as e:
+        logger.error(f"下载图片失败 {url}: {e}")
+        return None
+
 def render_gallery(images, title="图片"):
     """渲染图片画廊 - 朋友圈九宫格风格 + 纯CSS悬浮效果"""
     if not images:
@@ -304,26 +327,54 @@ def render_gallery(images, title="图片"):
 
     count = len(images)
 
-    # 使用 Streamlit 内置的图片显示功能
+    # 下载所有图片并转换为 base64
+    base64_images = []
+    with st.spinner("加载图片中..."):
+        for img_url in images:
+            base64_data = fetch_image_as_base64(img_url)
+            if base64_data:
+                base64_images.append(base64_data)
+            else:
+                # 下载失败，使用占位图
+                base64_images.append(None)
+
+    # 使用 HTML 显示 base64 图片
     if count == 1:
         # 单图：大图显示
-        st.image(images[0], use_container_width=True, caption="图片1")
+        if base64_images[0]:
+            st.markdown(f"""
+<div style="text-align:center;">
+    <img src="{base64_images[0]}" style="width:100%;max-width:500px;height:auto;border-radius:8px;" alt="图片1">
+</div>
+""", unsafe_allow_html=True)
+        else:
+            st.error("图片加载失败")
     elif count == 2:
         # 两图：左右排列
         col1, col2 = st.columns(2)
         with col1:
-            st.image(images[0], use_container_width=True, caption="图片1")
+            if base64_images[0]:
+                st.markdown(f'<img src="{base64_images[0]}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
+            else:
+                st.error("图片1加载失败")
         with col2:
-            st.image(images[1], use_container_width=True, caption="图片2")
+            if base64_images[1]:
+                st.markdown(f'<img src="{base64_images[1]}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
+            else:
+                st.error("图片2加载失败")
     elif count == 4:
         # 四图：2x2网格
         col1, col2 = st.columns(2)
         with col1:
-            st.image(images[0], use_container_width=True, caption="图片1")
-            st.image(images[1], use_container_width=True, caption="图片2")
+            if base64_images[0]:
+                st.markdown(f'<img src="{base64_images[0]}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px;">', unsafe_allow_html=True)
+            if base64_images[1]:
+                st.markdown(f'<img src="{base64_images[1]}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
         with col2:
-            st.image(images[2], use_container_width=True, caption="图片3")
-            st.image(images[3], use_container_width=True, caption="图片4")
+            if base64_images[2]:
+                st.markdown(f'<img src="{base64_images[2]}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px;">', unsafe_allow_html=True)
+            if base64_images[3]:
+                st.markdown(f'<img src="{base64_images[3]}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
     else:
         # 默认：3列九宫格布局
         rows = (count + 2) // 3
@@ -334,7 +385,10 @@ def render_gallery(images, title="图片"):
                 idx = row * 3 + col
                 if idx < count:
                     with cols[col]:
-                        st.image(images[idx], use_container_width=True, caption=f"图片{idx + 1}")
+                        if base64_images[idx]:
+                            st.markdown(f'<img src="{base64_images[idx]}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
+                        else:
+                            st.caption(f"图片{idx+1}加载失败")
 
 
 # ====================================
