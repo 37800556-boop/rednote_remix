@@ -338,56 +338,53 @@ def render_gallery(images, title="图片"):
                 # 下载失败，使用占位图
                 base64_images.append(None)
 
-    # 使用 HTML 显示 base64 图片，带点击放大功能
-    st.markdown("### 📷 图片预览")
-
-    # 显示大图预览区域
-    if "selected_image_idx" not in st.session_state:
-        st.session_state.selected_image_idx = 0
-
-    # 图片选择器
-    image_options = [f"图片 {i+1}" for i in range(count)]
-    selected_idx = st.selectbox("选择要查看的图片", range(count), format_func=lambda i: image_options[i], index=st.session_state.selected_image_idx)
-
-    # 显示大图
-    if base64_images[selected_idx]:
-        st.markdown(f"""
-<div style="text-align:center;padding:20px;background:#f5f5f5;border-radius:12px;margin:10px 0;">
-    <img src="{base64_images[selected_idx]}" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);" alt="图片{selected_idx+1}">
+    # 使用 HTML 显示 base64 图片，朋友圈九宫格 + 悬浮放大效果
+    if count == 1:
+        # 单图：大图显示
+        cols = st.columns(1)
+        with cols[0]:
+            if base64_images[0]:
+                st.markdown(f"""
+<div class="gallery-img-wrapper" style="text-align:center;">
+    <img class="gallery-img" src="{base64_images[0]}" style="width:100%;max-width:400px;height:auto;border-radius:8px;transition:transform 0.3s ease;" alt="图片1" onmouseover="this.style.transform='scale(1.5)';this.style.zIndex='100';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='scale(1)';this.style.zIndex='1';this.style.boxShadow='none';">
 </div>
 """, unsafe_allow_html=True)
-    else:
-        st.error(f"图片{selected_idx+1}加载失败")
-
-    st.markdown("---")
-    st.markdown("### 📎 缩略图")
-
-    # 显示缩略图网格
-    if count == 1:
-        st.markdown(f'<img src="{base64_images[0]}" style="width:100%;max-width:200px;height:150px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="document.getElementById(\"image-select\").selectedIndex=0;document.getElementById(\"image-select\").dispatchEvent(new Event(\"change\"));">', unsafe_allow_html=True)
+            else:
+                st.error("图片加载失败")
     elif count == 2:
+        # 两图：左右排列
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img src="{base64_images[0]}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;margin-bottom:8px;">', unsafe_allow_html=True)
+                st.markdown(f"""
+<div class="gallery-img-wrapper">
+    <img class="gallery-img" src="{base64_images[0]}" style="width:100%;height:180px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;" onmouseover="this.style.transform='scale(1.5)';this.style.zIndex='100';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='scale(1)';this.style.zIndex='1';this.style.boxShadow='none';">
+</div>
+""", unsafe_allow_html=True)
         with col2:
             if base64_images[1]:
-                st.markdown(f'<img src="{base64_images[1]}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;margin-bottom:8px;">', unsafe_allow_html=True)
+                st.markdown(f"""
+<div class="gallery-img-wrapper">
+    <img class="gallery-img" src="{base64_images[1]}" style="width:100%;height:180px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;" onmouseover="this.style.transform='scale(1.5)';this.style.zIndex='100';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='scale(1)';this.style.zIndex='1';this.style.boxShadow='none';">
+</div>
+""", unsafe_allow_html=True)
     elif count == 4:
+        # 四图：2x2网格
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img src="{base64_images[0]}" style="width:48%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img src="{base64_images[0]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;margin:4px;" onmouseover="this.style.transform=\'scale(1.5)\';this.style.zIndex=\'100\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.3)\';" onmouseout="this.style.transform=\'scale(1)\';this.style.zIndex=\'1\';this.style.boxShadow=\'none\';">', unsafe_allow_html=True)
             if base64_images[1]:
-                st.markdown(f'<img src="{base64_images[1]}" style="width:48%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img src="{base64_images[1]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;margin:4px;" onmouseover="this.style.transform=\'scale(1.5)\';this.style.zIndex=\'100\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.3)\';" onmouseout="this.style.transform=\'scale(1)\';this.style.zIndex=\'1\';this.style.boxShadow=\'none\';">', unsafe_allow_html=True)
         with col2:
             if base64_images[2]:
-                st.markdown(f'<img src="{base64_images[2]}" style="width:48%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img src="{base64_images[2]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;margin:4px;" onmouseover="this.style.transform=\'scale(1.5)\';this.style.zIndex=\'100\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.3)\';" onmouseout="this.style.transform=\'scale(1)\';this.style.zIndex=\'1\';this.style.boxShadow=\'none\';">', unsafe_allow_html=True)
             if base64_images[3]:
-                st.markdown(f'<img src="{base64_images[3]}" style="width:48%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img src="{base64_images[3]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;margin:4px;" onmouseover="this.style.transform=\'scale(1.5)\';this.style.zIndex=\'100\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.3)\';" onmouseout="this.style.transform=\'scale(1)\';this.style.zIndex=\'1\';this.style.boxShadow=\'none\';">', unsafe_allow_html=True)
     else:
         # 默认：3列九宫格布局
         rows = (count + 2) // 3
+
         for row in range(rows):
             cols = st.columns(3)
             for col in range(3):
@@ -395,7 +392,7 @@ def render_gallery(images, title="图片"):
                 if idx < count:
                     with cols[col]:
                         if base64_images[idx]:
-                            st.markdown(f'<img src="{base64_images[idx]}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;margin:4px;">', unsafe_allow_html=True)
+                            st.markdown(f'<img src="{base64_images[idx]}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;transition:transform 0.3s ease;margin:2px;" onmouseover="this.style.transform=\'scale(1.5)\';this.style.zIndex=\'100\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.3)\';" onmouseout="this.style.transform=\'scale(1)\';this.style.zIndex=\'1\';this.style.boxShadow=\'none\';">', unsafe_allow_html=True)
                         else:
                             st.caption(f"图片{idx+1}加载失败")
 
