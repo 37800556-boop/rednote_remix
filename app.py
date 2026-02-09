@@ -338,13 +338,14 @@ def render_gallery(images, title="图片"):
                 # 下载失败，使用占位图
                 base64_images.append(None)
 
-    # 使用 HTML 显示 base64 图片，朋友圈九宫格 + 纯CSS悬浮放大效果
+    # 使用 HTML 显示 base64 图片，朋友圈九宫格 + 悬浮放大效果
+    # 统一高度120px，object-fit:cover 填充，悬浮时 contain 完整显示
     if count == 1:
-        # 单图：大图显示
+        # 单图：较大显示
         cols = st.columns(1)
         with cols[0]:
             if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:100%;max-width:400px;height:auto;border-radius:8px;display:block;margin:0 auto;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="max-width:350px;height:280px;">', unsafe_allow_html=True)
             else:
                 st.error("图片加载失败")
     elif count == 2:
@@ -352,27 +353,26 @@ def render_gallery(images, title="图片"):
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:100%;height:180px;border-radius:8px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}">', unsafe_allow_html=True)
         with col2:
             if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:100%;height:180px;border-radius:8px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}">', unsafe_allow_html=True)
     elif count == 4:
         # 四图：2x2网格
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}">', unsafe_allow_html=True)
             if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}">', unsafe_allow_html=True)
         with col2:
             if base64_images[2]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[2]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[2]}">', unsafe_allow_html=True)
             if base64_images[3]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[3]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[3]}">', unsafe_allow_html=True)
     else:
         # 默认：3列九宫格布局
         rows = (count + 2) // 3
-
         for row in range(rows):
             cols = st.columns(3)
             for col in range(3):
@@ -380,7 +380,7 @@ def render_gallery(images, title="图片"):
                 if idx < count:
                     with cols[col]:
                         if base64_images[idx]:
-                            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[idx]}" style="width:100%;height:110px;border-radius:8px;margin:2px;">', unsafe_allow_html=True)
+                            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[idx]}">', unsafe_allow_html=True)
                         else:
                             st.caption(f"图片{idx+1}加载失败")
 
@@ -578,19 +578,32 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 图片悬浮放大效果 - 纯CSS实现 */
+    /* 图片画廊效果 - 朋友圈风格 */
+    .gallery-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: flex-start;
+    }
+
     .gallery-hover-img {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
         cursor: pointer;
-        object-fit: contain;
-        background: #f5f5f5;
+        background: #f0f0f0;
     }
 
     .gallery-hover-img:hover {
-        transform: scale(2);
-        z-index: 100;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        transform: scale(2.5) translateZ(0);
+        z-index: 1000;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        object-fit: contain;
         background: #fff;
+        border-radius: 12px;
     }
 </style>
 """, unsafe_allow_html=True)
