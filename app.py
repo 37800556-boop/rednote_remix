@@ -338,16 +338,14 @@ def render_gallery(images, title="图片"):
                 # 下载失败，使用占位图
                 base64_images.append(None)
 
-    # 使用 HTML 显示 base64 图片，朋友圈九宫格 + 悬浮放大效果
-    # 统一高度120px，object-fit:cover 填充，悬浮时 contain 完整显示
+    # 使用 HTML 显示 base64 图片，仿手机屏幕比例 + 悬浮放大
+    # 竖长比例(约3:4)，object-fit:cover 填充，悬浮放大2.8倍
     if count == 1:
         # 单图：较大显示
-        cols = st.columns(1)
-        with cols[0]:
-            if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="max-width:350px;height:280px;">', unsafe_allow_html=True)
-            else:
-                st.error("图片加载失败")
+        if base64_images[0]:
+            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="max-width:280px;height:380px;">', unsafe_allow_html=True)
+        else:
+            st.error("图片加载失败")
     elif count == 2:
         # 两图：左右排列
         col1, col2 = st.columns(2)
@@ -578,32 +576,31 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 图片画廊效果 - 朋友圈风格 */
+    /* 图片画廊效果 - 仿手机屏幕比例 */
     .gallery-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
+        gap: 6px;
         justify-content: flex-start;
     }
 
     .gallery-hover-img {
         width: 100%;
-        height: 120px;
+        height: 130px;
         object-fit: cover;
-        object-position: center;
-        border-radius: 8px;
+        object-position: center top;
+        border-radius: 6px;
         transition: all 0.3s ease;
         cursor: pointer;
-        background: #f0f0f0;
+        background: #f5f5f5;
     }
 
     .gallery-hover-img:hover {
-        transform: scale(2.5) translateZ(0);
+        transform: scale(2.8);
         z-index: 1000;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-        object-fit: contain;
-        background: #fff;
-        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        border: 3px solid #fff;
+        border-radius: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
