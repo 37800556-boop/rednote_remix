@@ -304,13 +304,17 @@ def render_gallery(images, title="图片"):
 
     count = len(images)
 
+    # 使用图片代理服务绕过防盗链
+    def get_proxy_url(url):
+        return f"https://imageproxy.pimg.tw/transform?format=webp&url={url}"
+
     if count == 1:
         # 单图：大图显示
         cols = st.columns(1)
         with cols[0]:
             st.markdown(f"""
 <div class="gallery-img-wrapper" style="text-align:center;">
-    <img class="gallery-img" src="{images[0]}" style="width:100%;max-width:400px;height:auto;" alt="图片1">
+    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:100%;max-width:400px;height:auto;" alt="图片1">
 </div>
 """, unsafe_allow_html=True)
     elif count == 2:
@@ -319,13 +323,13 @@ def render_gallery(images, title="图片"):
         with col1:
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[0]}" style="width:100%;height:180px;object-fit:cover;" alt="图片1">
+    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:100%;height:180px;object-fit:cover;" alt="图片1">
 </div>
 """, unsafe_allow_html=True)
         with col2:
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[1]}" style="width:100%;height:180px;object-fit:cover;" alt="图片2">
+    <img class="gallery-img" src="{get_proxy_url(images[1])}" style="width:100%;height:180px;object-fit:cover;" alt="图片2">
 </div>
 """, unsafe_allow_html=True)
     elif count == 4:
@@ -334,23 +338,23 @@ def render_gallery(images, title="图片"):
         with col1:
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[0]}" style="width:48%;height:140px;object-fit:cover;" alt="图片1">
+    <img class="gallery-img" src="{get_proxy_url(images[0])}" style="width:48%;height:140px;object-fit:cover;" alt="图片1">
 </div>
 """, unsafe_allow_html=True)
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[1]}" style="width:48%;height:140px;object-fit:cover;" alt="图片2">
+    <img class="gallery-img" src="{get_proxy_url(images[1])}" style="width:48%;height:140px;object-fit:cover;" alt="图片2">
 </div>
 """, unsafe_allow_html=True)
         with col2:
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[2]}" style="width:48%;height:140px;object-fit:cover;" alt="图片3">
+    <img class="gallery-img" src="{get_proxy_url(images[2])}" style="width:48%;height:140px;object-fit:cover;" alt="图片3">
 </div>
 """, unsafe_allow_html=True)
             st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[3]}" style="width:48%;height:140px;object-fit:cover;" alt="图片4">
+    <img class="gallery-img" src="{get_proxy_url(images[3])}" style="width:48%;height:140px;object-fit:cover;" alt="图片4">
 </div>
 """, unsafe_allow_html=True)
     else:
@@ -365,7 +369,7 @@ def render_gallery(images, title="图片"):
                     with cols[col]:
                         st.markdown(f"""
 <div class="gallery-img-wrapper">
-    <img class="gallery-img" src="{images[idx]}" style="width:100%;height:110px;object-fit:cover;" alt="图片{idx + 1}">
+    <img class="gallery-img" src="{get_proxy_url(images[idx])}" style="width:100%;height:110px;object-fit:cover;" alt="图片{idx + 1}">
 </div>
 """, unsafe_allow_html=True)
 
