@@ -352,23 +352,23 @@ def render_gallery(images, title="图片"):
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:100%;height:180px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:100%;height:180px;border-radius:8px;">', unsafe_allow_html=True)
         with col2:
             if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:100%;height:180px;object-fit:cover;border-radius:8px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:100%;height:180px;border-radius:8px;">', unsafe_allow_html=True)
     elif count == 4:
         # 四图：2x2网格
         col1, col2 = st.columns(2)
         with col1:
             if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
             if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
         with col2:
             if base64_images[2]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[2]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[2]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
             if base64_images[3]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[3]}" style="width:48%;height:140px;object-fit:cover;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
+                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[3]}" style="width:48%;height:140px;border-radius:8px;margin:4px;">', unsafe_allow_html=True)
     else:
         # 默认：3列九宫格布局
         rows = (count + 2) // 3
@@ -380,7 +380,7 @@ def render_gallery(images, title="图片"):
                 if idx < count:
                     with cols[col]:
                         if base64_images[idx]:
-                            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[idx]}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin:2px;">', unsafe_allow_html=True)
+                            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[idx]}" style="width:100%;height:110px;border-radius:8px;margin:2px;">', unsafe_allow_html=True)
                         else:
                             st.caption(f"图片{idx+1}加载失败")
 
