@@ -17,6 +17,37 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ====================================
+# 配置持久化 - 使用 cookies
+# ====================================
+def get_config_from_cookies():
+    """从 cookies 读取配置"""
+    cookies = st.context.cookies
+    config = {}
+
+    deepseek_key = cookies.get("deepseek_api_key")
+    if deepseek_key:
+        config["deepseek_api_key"] = deepseek_key
+
+    jimeng_key = cookies.get("jimeng_api_key")
+    if jimeng_key:
+        config["jimeng_api_key"] = jimeng_key
+
+    endpoint_id = cookies.get("jimeng_endpoint_id")
+    if endpoint_id:
+        config["jimeng_endpoint_id"] = endpoint_id
+
+    xhs_cookies = cookies.get("xhs_cookies")
+    if xhs_cookies:
+        config["xhs_cookies"] = xhs_cookies
+
+    return config
+
+def save_config_to_cookies(config_data):
+    """保存配置到 cookies"""
+    for key, value in config_data.items():
+        st.context.cookies[key] = value
+
+# ====================================
 # 自动安装 Playwright 浏览器（云端环境）
 # ====================================
 def ensure_playwright_browser():
@@ -245,17 +276,20 @@ st.set_page_config(
 # ====================================
 def init_session_state():
     """初始化 Streamlit Session State"""
+    # 先从 cookies 加载配置
+    cookie_config = get_config_from_cookies()
+
     if "deepseek_api_key" not in st.session_state:
-        st.session_state.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        st.session_state.deepseek_api_key = cookie_config.get("deepseek_api_key", os.getenv("DEEPSEEK_API_KEY", ""))
 
     if "jimeng_api_key" not in st.session_state:
-        st.session_state.jimeng_api_key = os.getenv("JIMENG_API_KEY", "")
+        st.session_state.jimeng_api_key = cookie_config.get("jimeng_api_key", os.getenv("JIMENG_API_KEY", ""))
 
     if "jimeng_endpoint_id" not in st.session_state:
-        st.session_state.jimeng_endpoint_id = os.getenv("JIMENG_ENDPOINT_ID", "")
+        st.session_state.jimeng_endpoint_id = cookie_config.get("jimeng_endpoint_id", os.getenv("JIMENG_ENDPOINT_ID", ""))
 
     if "xhs_cookies" not in st.session_state:
-        st.session_state.xhs_cookies = os.getenv("XHS_COOKIES", "")
+        st.session_state.xhs_cookies = cookie_config.get("xhs_cookies", os.getenv("XHS_COOKIES", ""))
 
     if "current_note" not in st.session_state:
         st.session_state.current_note: Optional[NoteData] = None
@@ -790,7 +824,7 @@ if st.session_state.config_panel_open:
         with col_clear:
             clear_clicked = st.button("🗑️ 清除保存", use_container_width=True, key="clear_config_btn")
 
-        # 保存按钮 - 将配置保存到 localStorage
+        # 保存按钮 - 将配置保存到 cookies
         if save_clicked:
             config_data = {
                 "deepseek_api_key": st.session_state.deepseek_api_key,
@@ -798,19 +832,31 @@ if st.session_state.config_panel_open:
                 "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
                 "xhs_cookies": st.session_state.xhs_cookies
             }
-            # 传递给 JavaScript
-            st.session_state._config_to_save = config_data
-            st.success("✓ 配置已保存，刷新页面后自动加载")
-            st.rerun()
+            # 保存到 cookies
+            save_config_to_cookies(config_data)
+            st.success("✓ 配置已保存到浏览器，下次访问自动加载")
 
         # 清除按钮
         if clear_clicked:
-            st.session_state._clear_config = True
-            st.session_state._config_to_save = {}
+            # 清除 cookies
+            cookies = st.context.cookies
+            if "deepseek_api_key" in cookies:
+                del cookies["deepseek_api_key"]
+            if "jimeng_api_key" in cookies:
+                del cookies["jimeng_api_key"]
+            if "jimeng_endpoint_id" in cookies:
+                del cookies["jimeng_endpoint_id"]
+            if "xhs_cookies" in cookies:
+                del cookies["xhs_cookies"]
+            # 清除 session_state
+            st.session_state.deepseek_api_key = ""
+            st.session_state.jimeng_api_key = ""
+            st.session_state.jimeng_endpoint_id = ""
+            st.session_state.xhs_cookies = ""
             st.success("✓ 已清除浏览器保存的配置")
             st.rerun()
 
-        # 从 localStorage 加载配置
+        # 从 cookies 加载配置
         if "config_loaded" not in st.session_state:
             st.session_state.config_loaded = False
 
