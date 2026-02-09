@@ -340,47 +340,32 @@ def render_gallery(images, title="图片"):
 
     # 使用 HTML 显示 base64 图片，仿手机屏幕比例 + 悬浮放大
     # 竖长比例(约3:4)，object-fit:cover 填充，悬浮放大2.8倍
+    # 使用纯 HTML 布局填满宽度
+
     if count == 1:
-        # 单图：较大显示
+        # 单图：居中显示
         if base64_images[0]:
-            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}" style="max-width:280px;height:380px;">', unsafe_allow_html=True)
+            st.markdown(f'''
+<div class="gallery-container" style="justify-content:center;">
+    <img class="gallery-hover-img" src="{base64_images[0]}" style="width:200px;height:280px;">
+</div>
+''', unsafe_allow_html=True)
         else:
             st.error("图片加载失败")
-    elif count == 2:
-        # 两图：左右排列
-        col1, col2 = st.columns(2)
-        with col1:
-            if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}">', unsafe_allow_html=True)
-        with col2:
-            if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}">', unsafe_allow_html=True)
-    elif count == 4:
-        # 四图：2x2网格
-        col1, col2 = st.columns(2)
-        with col1:
-            if base64_images[0]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[0]}">', unsafe_allow_html=True)
-            if base64_images[1]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[1]}">', unsafe_allow_html=True)
-        with col2:
-            if base64_images[2]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[2]}">', unsafe_allow_html=True)
-            if base64_images[3]:
-                st.markdown(f'<img class="gallery-hover-img" src="{base64_images[3]}">', unsafe_allow_html=True)
     else:
-        # 默认：3列九宫格布局
-        rows = (count + 2) // 3
-        for row in range(rows):
-            cols = st.columns(3)
-            for col in range(3):
-                idx = row * 3 + col
-                if idx < count:
-                    with cols[col]:
-                        if base64_images[idx]:
-                            st.markdown(f'<img class="gallery-hover-img" src="{base64_images[idx]}">', unsafe_allow_html=True)
-                        else:
-                            st.caption(f"图片{idx+1}加载失败")
+        # 多图：九宫格布局
+        imgs_html = ""
+        for idx, img_data in enumerate(base64_images):
+            if img_data:
+                imgs_html += f'<img class="gallery-hover-img" src="{img_data}">\n'
+            else:
+                imgs_html += f'<div class="gallery-hover-img" style="display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#999;">图片{idx+1}加载失败</div>\n'
+
+        st.markdown(f'''
+<div class="gallery-container">
+{imgs_html}
+</div>
+''', unsafe_allow_html=True)
 
 
 # ====================================
@@ -576,31 +561,41 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 图片画廊效果 - 仿手机屏幕比例 */
+    /* 图片画廊效果 - 仿手机屏幕比例，填满宽度 */
     .gallery-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
         justify-content: flex-start;
+        width: 100%;
     }
 
-    .gallery-hover-img {
-        width: 100%;
-        height: 130px;
+    .gallery-container .gallery-hover-img {
+        width: calc(33.33% - 6px);
+        height: 160px;
         object-fit: cover;
         object-position: center top;
-        border-radius: 6px;
+        border-radius: 8px;
         transition: all 0.3s ease;
         cursor: pointer;
         background: #f5f5f5;
     }
 
-    .gallery-hover-img:hover {
-        transform: scale(2.8);
+    .gallery-container .gallery-hover-img:hover {
+        transform: scale(2.5);
         z-index: 1000;
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         border: 3px solid #fff;
-        border-radius: 8px;
+        border-radius: 10px;
+    }
+
+    /* 两图时每行两个 */
+    @media (min-width: 600px) {
+        .gallery-container .gallery-hover-img:nth-child(1):nth-last-child(2),
+        .gallery-container .gallery-hover-img:nth-child(2):nth-last-child(1) {
+            width: calc(50% - 4px);
+            height: 200px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
