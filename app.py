@@ -561,41 +561,33 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 图片画廊效果 - 仿手机屏幕比例，填满宽度 */
+    /* 图片画廊 - 完整显示缩略图 */
     .gallery-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 10px;
         justify-content: flex-start;
         width: 100%;
     }
 
-    .gallery-container .gallery-hover-img {
-        width: calc(33.33% - 6px);
+    .gallery-hover-img {
+        width: 120px;
         height: 160px;
-        object-fit: cover;
-        object-position: center top;
-        border-radius: 8px;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 6px;
         transition: all 0.3s ease;
         cursor: pointer;
-        background: #f5f5f5;
+        background: #f8f8f8;
+        border: 1px solid #eee;
     }
 
-    .gallery-container .gallery-hover-img:hover {
+    .gallery-hover-img:hover {
         transform: scale(2.5);
         z-index: 1000;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        border: 3px solid #fff;
-        border-radius: 10px;
-    }
-
-    /* 两图时每行两个 */
-    @media (min-width: 600px) {
-        .gallery-container .gallery-hover-img:nth-child(1):nth-last-child(2),
-        .gallery-container .gallery-hover-img:nth-child(2):nth-last-child(1) {
-            width: calc(50% - 4px);
-            height: 200px;
-        }
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        background: #fff;
+        border: 2px solid #fff;
     }
 </style>
 """, unsafe_allow_html=True)
