@@ -8,6 +8,7 @@ import streamlit as st
 import logging
 import os
 import re
+import json
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -533,6 +534,124 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# 配置持久化 JavaScript - 在 CSS 之后单独注入
+config_to_save = json.dumps(st.session_state.get('_config_to_save', {}))
+clear_config_flag = str(st.session_state.get('_clear_config', False)).lower()
+
+# 清除清除标志
+if st.session_state.get('_clear_config', False):
+    st.session_state._clear_config = False
+
+st.markdown(f"""
+<script>
+// 配置持久化 - 使用 localStorage
+const CONFIG_KEY = 'rednote_remix_config';
+const CONFIG_TO_SAVE = {config_to_save};
+const CLEAR_CONFIG_FLAG = {clear_config_flag};
+
+// 保存配置到 localStorage
+function saveConfigToBrowser(configData) {{
+    if (configData && Object.keys(configData).length > 0) {{
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(configData));
+        console.log('配置已保存到本地存储', configData);
+        return true;
+    }}
+    return false;
+}}
+
+// 如果有配置需要保存，立即执行
+if (CONFIG_TO_SAVE && Object.keys(CONFIG_TO_SAVE).length > 0) {{
+    saveConfigToBrowser(CONFIG_TO_SAVE);
+}}
+
+// 清除配置
+function clearConfigFromBrowser() {{
+    localStorage.removeItem(CONFIG_KEY);
+    console.log('已清除本地存储的配置');
+}}
+
+if (CLEAR_CONFIG_FLAG === 'true') {{
+    clearConfigFromBrowser();
+}}
+
+// 从 localStorage 加载配置
+function loadConfigFromBrowser() {{
+    const saved = localStorage.getItem(CONFIG_KEY);
+    if (saved) {{
+        try {{
+            return JSON.parse(saved);
+        }} catch (e) {{
+            console.error('解析保存的配置失败', e);
+            return null;
+        }}
+    }}
+    return null;
+}}
+
+// 页面加载时尝试恢复配置并填充到输入框
+document.addEventListener('DOMContentLoaded', function() {{
+    const config = loadConfigFromBrowser();
+    if (config) {{
+        console.log('从本地存储加载配置', config);
+        window.savedConfig = config; // 保存到全局变量供后续使用
+    }} else {{
+        window.savedConfig = null;
+    }}
+}});
+
+// 监听 Streamlit 渲染完成后尝试填充配置
+const observer = new MutationObserver(function() {{
+    const config = window.savedConfig;
+    if (!config) return;
+
+    // 填充 DeepSeek API Key (password input)
+    const deepseekInput = document.querySelector('input[placeholder*="DeepSeek"], input[aria-label*="DeepSeek"]');
+    if (deepseekInput && config.deepseek_api_key && deepseekInput.value !== config.deepseek_api_key) {{
+        deepseekInput.value = config.deepseek_api_key;
+        deepseekInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+        deepseekInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        console.log('已填充 DeepSeek API Key');
+    }}
+
+    // 填充 Jimeng API Key (password input) - 寻找第二个 password input
+    const allPasswordInputs = document.querySelectorAll('input[type="password"]');
+    if (allPasswordInputs.length >= 2 && config.jimeng_api_key) {{
+        const jimengInput = allPasswordInputs[1]; // 第二个密码框
+        if (jimengInput.value !== config.jimeng_api_key) {{
+            jimengInput.value = config.jimeng_api_key;
+            jimengInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            jimengInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            console.log('已填充 Jimeng API Key');
+        }}
+    }}
+
+    // 填充 Jimeng Endpoint ID
+    const endpointInputs = document.querySelectorAll('input[type="text"]');
+    endpointInputs.forEach(function(input) {{
+        if ((input.placeholder?.includes('Endpoint') || input.ariaLabel?.includes('Endpoint')) && config.jimeng_endpoint_id) {{
+            input.value = config.jimeng_endpoint_id;
+            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            console.log('已填充 Jimeng Endpoint ID');
+        }}
+    }});
+
+    // 填充 Cookie
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(function(area) {{
+        if ((area.placeholder?.includes('Cookie') || area.ariaLabel?.includes('Cookie')) && config.xhs_cookies) {{
+            area.value = config.xhs_cookies;
+            area.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            area.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            console.log('已填充 Cookie');
+        }}
+    }});
+}});
+
+observer.observe(document.body, {{ childList: true, subtree: true }});
+</script>
+""", unsafe_allow_html=True)
+
 # 使用 Form 组件将输入框和按钮组合在一起
 with st.form("url_form", clear_on_submit=True):
     url_input = st.text_area(
@@ -601,6 +720,37 @@ if config_shown:
                 height=60
             )
             st.session_state.xhs_cookies = xhs_cookies
+
+        # 保存配置按钮
+        col_save, col_clear = st.columns(2)
+        with col_save:
+            save_clicked = st.button("💾 保存到浏览器", use_container_width=True, key="save_config_btn")
+        with col_clear:
+            clear_clicked = st.button("🗑️ 清除保存", use_container_width=True, key="clear_config_btn")
+
+        # 保存按钮 - 将配置保存到 localStorage
+        if save_clicked:
+            config_data = {
+                "deepseek_api_key": st.session_state.deepseek_api_key,
+                "jimeng_api_key": st.session_state.jimeng_api_key,
+                "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
+                "xhs_cookies": st.session_state.xhs_cookies
+            }
+            # 传递给 JavaScript
+            st.session_state._config_to_save = config_data
+            st.success("✓ 配置已保存，刷新页面后自动加载")
+            st.rerun()
+
+        # 清除按钮
+        if clear_clicked:
+            st.session_state._clear_config = True
+            st.session_state._config_to_save = {}
+            st.success("✓ 已清除浏览器保存的配置")
+            st.rerun()
+
+        # 从 localStorage 加载配置
+        if "config_loaded" not in st.session_state:
+            st.session_state.config_loaded = False
 
         # 状态指示
         ds_ready = bool(st.session_state.deepseek_api_key)
