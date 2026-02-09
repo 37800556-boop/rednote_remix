@@ -16,8 +16,18 @@ from dotenv import load_dotenv
 # 加载 .env 文件
 load_dotenv()
 
+# 引入 CookieManager 用于配置持久化
+try:
+    import extra_streamlit_components as stx
+    cookie_manager = stx.CookieManager()
+    HAS_COOKIE_MANAGER = True
+except ImportError:
+    HAS_COOKIE_MANAGER = False
+    cookie_manager = None
+    logging.warning("extra_streamlit_components 未安装，配置持久化功能将不可用")
+
 # ====================================
-# 配置持久化 - 使用 cookies
+# 自动安装 Playwright 浏览器（云端环境）
 # ====================================
 def get_config_from_cookies():
     """从 cookies 读取配置"""
@@ -44,17 +54,6 @@ def get_config_from_cookies():
         return config
     except:
         return {}
-
-def save_config_to_cookies(config_data):
-    """保存配置到 cookies - 返回 JavaScript 代码"""
-    return f"""
-<script>
-// 设置到 localStorage
-const config = {json.dumps(config_data)};
-localStorage.setItem('rednote_remix_config', JSON.stringify(config));
-console.log('配置已保存到 localStorage');
-</script>
-"""
 
 # ====================================
 # 自动安装 Playwright 浏览器（云端环境）
@@ -285,20 +284,37 @@ st.set_page_config(
 # ====================================
 def init_session_state():
     """初始化 Streamlit Session State"""
-    # 先从 cookies 加载配置
-    cookie_config = get_config_from_cookies()
+    # 优先从 Cookie 加载配置
+    if HAS_COOKIE_MANAGER and cookie_manager:
+        deepseek_cookie = cookie_manager.get("deepseek_api_key")
+        jimeng_cookie = cookie_manager.get("jimeng_api_key")
+        endpoint_cookie = cookie_manager.get("jimeng_endpoint_id")
+        xhs_cookie = cookie_manager.get("xhs_cookies")
 
-    if "deepseek_api_key" not in st.session_state:
-        st.session_state.deepseek_api_key = cookie_config.get("deepseek_api_key", os.getenv("DEEPSEEK_API_KEY", ""))
+        if "deepseek_api_key" not in st.session_state:
+            st.session_state.deepseek_api_key = deepseek_cookie if deepseek_cookie else os.getenv("DEEPSEEK_API_KEY", "")
 
-    if "jimeng_api_key" not in st.session_state:
-        st.session_state.jimeng_api_key = cookie_config.get("jimeng_api_key", os.getenv("JIMENG_API_KEY", ""))
+        if "jimeng_api_key" not in st.session_state:
+            st.session_state.jimeng_api_key = jimeng_cookie if jimeng_cookie else os.getenv("JIMENG_API_KEY", "")
 
-    if "jimeng_endpoint_id" not in st.session_state:
-        st.session_state.jimeng_endpoint_id = cookie_config.get("jimeng_endpoint_id", os.getenv("JIMENG_ENDPOINT_ID", ""))
+        if "jimeng_endpoint_id" not in st.session_state:
+            st.session_state.jimeng_endpoint_id = endpoint_cookie if endpoint_cookie else os.getenv("JIMENG_ENDPOINT_ID", "")
 
-    if "xhs_cookies" not in st.session_state:
-        st.session_state.xhs_cookies = cookie_config.get("xhs_cookies", os.getenv("XHS_COOKIES", ""))
+        if "xhs_cookies" not in st.session_state:
+            st.session_state.xhs_cookies = xhs_cookie if xhs_cookie else os.getenv("XHS_COOKIES", "")
+    else:
+        # 没有 CookieManager 时使用环境变量
+        if "deepseek_api_key" not in st.session_state:
+            st.session_state.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
+
+        if "jimeng_api_key" not in st.session_state:
+            st.session_state.jimeng_api_key = os.getenv("JIMENG_API_KEY", "")
+
+        if "jimeng_endpoint_id" not in st.session_state:
+            st.session_state.jimeng_endpoint_id = os.getenv("JIMENG_ENDPOINT_ID", "")
+
+        if "xhs_cookies" not in st.session_state:
+            st.session_state.xhs_cookies = os.getenv("XHS_COOKIES", "")
 
     if "current_note" not in st.session_state:
         st.session_state.current_note: Optional[NoteData] = None
@@ -827,48 +843,22 @@ if st.session_state.config_panel_open:
             st.session_state.xhs_cookies = xhs_cookies
 
         # 配置操作按钮
-        col_export, col_import, col_clear = st.columns(3)
-        with col_export:
-            export_clicked = st.button("📤 导出", use_container_width=True, key="export_config_btn")
-        with col_import:
-            import_clicked = st.button("📥 导入", use_container_width=True, key="import_config_btn")
+        col_save, col_clear = st.columns(2)
+        with col_save:
+            save_clicked = st.button("💾 保存配置", use_container_width=True, key="save_config_btn")
         with col_clear:
-            clear_clicked = st.button("🗑️ 清除", use_container_width=True, key="clear_config_btn")
+            clear_clicked = st.button("🗑️ 清除配置", use_container_width=True, key="clear_config_btn")
 
-        # 导出配置 - 生成配置文本供用户复制
-        if export_clicked:
-            config_data = {
-                "deepseek_api_key": st.session_state.deepseek_api_key,
-                "jimeng_api_key": st.session_state.jimeng_api_key,
-                "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
-                "xhs_cookies": st.session_state.xhs_cookies
-            }
-            config_json = json.dumps(config_data, ensure_ascii=False, indent=2)
-            st.text_area("复制下方配置代码保存到本地：", config_json, height=150, key="config_export")
-            st.success("✓ 配置已生成，请复制保存")
-
-            # 同时保存到 localStorage
-            st.markdown(f"""
-<script>
-localStorage.setItem('rednote_remix_config', JSON.stringify({json.dumps(config_data)}));
-console.log('配置已保存到 localStorage');
-</script>
-""", unsafe_allow_html=True)
-
-        # 导入配置 - 从粘贴的配置代码加载
-        if import_clicked:
-            imported_config = st.text_area("粘贴配置代码：", height=100, key="config_import")
-            if st.button("确认导入", key="confirm_import"):
-                try:
-                    config_data = json.loads(imported_config)
-                    st.session_state.deepseek_api_key = config_data.get("deepseek_api_key", "")
-                    st.session_state.jimeng_api_key = config_data.get("jimeng_api_key", "")
-                    st.session_state.jimeng_endpoint_id = config_data.get("jimeng_endpoint_id", "")
-                    st.session_state.xhs_cookies = config_data.get("xhs_cookies", "")
-                    st.success("✓ 配置已导入")
-                    st.rerun()
-                except json.JSONDecodeError:
-                    st.error("❌ 配置代码格式错误，请检查")
+        # 保存配置按钮 - 使用 CookieManager
+        if save_clicked:
+            if HAS_COOKIE_MANAGER and cookie_manager:
+                cookie_manager.set("deepseek_api_key", st.session_state.deepseek_api_key)
+                cookie_manager.set("jimeng_api_key", st.session_state.jimeng_api_key)
+                cookie_manager.set("jimeng_endpoint_id", st.session_state.jimeng_endpoint_id)
+                cookie_manager.set("xhs_cookies", st.session_state.xhs_cookies)
+                st.success("✓ 配置已保存到浏览器，刷新页面不会丢失")
+            else:
+                st.error("❌ Cookie 管理器不可用，请检查 extra_streamlit_components 是否安装")
 
         # 清除配置
         if clear_clicked:
@@ -876,12 +866,11 @@ console.log('配置已保存到 localStorage');
             st.session_state.jimeng_api_key = ""
             st.session_state.jimeng_endpoint_id = ""
             st.session_state.xhs_cookies = ""
-            st.markdown("""
-<script>
-localStorage.removeItem('rednote_remix_config');
-console.log('已清除本地存储的配置');
-</script>
-""", unsafe_allow_html=True)
+            if HAS_COOKIE_MANAGER and cookie_manager:
+                cookie_manager.delete("deepseek_api_key")
+                cookie_manager.delete("jimeng_api_key")
+                cookie_manager.delete("jimeng_endpoint_id")
+                cookie_manager.delete("xhs_cookies")
             st.success("✓ 已清除配置")
             st.rerun()
 
