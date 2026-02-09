@@ -44,20 +44,43 @@ class XiaohongshuScraper:
 
     def start(self):
         """启动浏览器"""
+        import subprocess
         self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(
-            headless=self.headless,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-features=IsolateOrigins,site-per-process',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-                '--start-maximized',
-                '--window-size=1920,1080'
-            ]
-        )
+        try:
+            self._browser = self._playwright.chromium.launch(
+                headless=self.headless,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor',
+                    '--start-maximized',
+                    '--window-size=1920,1080'
+                ]
+            )
+        except Exception as e:
+            # 浏览器未安装，尝试自动安装
+            if "Executable doesn't exist" in str(e) or "doesn't exist" in str(e):
+                logger.info("Playwright 浏览器未安装，正在自动安装...")
+                subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+                # 重试启动
+                self._browser = self._playwright.chromium.launch(
+                    headless=self.headless,
+                    args=[
+                        '--disable-blink-features=AutomationControlled',
+                        '--disable-features=IsolateOrigins,site-per-process',
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-web-security',
+                        '--disable-features=VizDisplayCompositor',
+                        '--start-maximized',
+                        '--window-size=1920,1080'
+                    ]
+                )
+            else:
+                raise
 
     def stop(self):
         """停止浏览器"""

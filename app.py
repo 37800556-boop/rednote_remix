@@ -9,11 +9,39 @@ import logging
 import os
 import re
 import json
+import subprocess
 from typing import Optional
 from dotenv import load_dotenv
 
 # 加载 .env 文件
 load_dotenv()
+
+# ====================================
+# 自动安装 Playwright 浏览器（云端环境）
+# ====================================
+def ensure_playwright_browser():
+    """确保 Playwright 浏览器已安装"""
+    try:
+        from playwright.sync_api import sync_playwright
+        # 尝试启动浏览器，如果失败则安装
+        with sync_playwright() as p:
+            try:
+                # 浏览器是否已安装
+                browser = p.chromium.launch(headless=True)
+                browser.close()
+            except Exception:
+                # 浏览器未安装，自动安装
+                import sys
+                subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+    except Exception as e:
+        logging.warning(f"Playwright 浏览器检查失败: {e}")
+
+# 只在云端环境（非 Windows）中运行自动安装
+if os.environ.get('STREAMLIT_SERVER_URL') or os.name != 'nt':
+    try:
+        ensure_playwright_browser()
+    except:
+        pass  # 静默失败，不影响应用启动
 
 from models import NoteData, RemixedContent, RemixStyle, RemixOptions
 from services.scraper import scrape_note
