@@ -95,6 +95,31 @@ from utils import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ====================================
+# 配置文件持久化
+# ====================================
+CONFIG_FILE = ".config.json"
+
+def load_config_from_file():
+    """从配置文件加载配置"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning(f"加载配置文件失败: {e}")
+    return {}
+
+def save_config_to_file(config):
+    """保存配置到文件"""
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"保存配置文件失败: {e}")
+        return False
+
 
 # ====================================
 # CSS 注入 - 极简现代风格
@@ -284,37 +309,26 @@ st.set_page_config(
 # ====================================
 def init_session_state():
     """初始化 Streamlit Session State"""
-    # 优先从 Cookie 加载配置
-    if HAS_COOKIE_MANAGER and cookie_manager:
-        deepseek_cookie = cookie_manager.get("deepseek_api_key")
-        jimeng_cookie = cookie_manager.get("jimeng_api_key")
-        endpoint_cookie = cookie_manager.get("jimeng_endpoint_id")
-        xhs_cookie = cookie_manager.get("xhs_cookies")
+    # 优先从配置文件加载配置（本地持久化）
+    file_config = load_config_from_file()
 
-        if "deepseek_api_key" not in st.session_state:
-            st.session_state.deepseek_api_key = deepseek_cookie if deepseek_cookie else os.getenv("DEEPSEEK_API_KEY", "")
+    def get_config_value(key, env_var, default=""):
+        """获取配置值的优先级：配置文件 > 环境变量 > 默认值"""
+        if file_config and key in file_config and file_config[key]:
+            return file_config[key]
+        return os.getenv(env_var, default)
 
-        if "jimeng_api_key" not in st.session_state:
-            st.session_state.jimeng_api_key = jimeng_cookie if jimeng_cookie else os.getenv("JIMENG_API_KEY", "")
+    if "deepseek_api_key" not in st.session_state:
+        st.session_state.deepseek_api_key = get_config_value("deepseek_api_key", "DEEPSEEK_API_KEY")
 
-        if "jimeng_endpoint_id" not in st.session_state:
-            st.session_state.jimeng_endpoint_id = endpoint_cookie if endpoint_cookie else os.getenv("JIMENG_ENDPOINT_ID", "")
+    if "jimeng_api_key" not in st.session_state:
+        st.session_state.jimeng_api_key = get_config_value("jimeng_api_key", "JIMENG_API_KEY")
 
-        if "xhs_cookies" not in st.session_state:
-            st.session_state.xhs_cookies = xhs_cookie if xhs_cookie else os.getenv("XHS_COOKIES", "")
-    else:
-        # 没有 CookieManager 时使用环境变量
-        if "deepseek_api_key" not in st.session_state:
-            st.session_state.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
+    if "jimeng_endpoint_id" not in st.session_state:
+        st.session_state.jimeng_endpoint_id = get_config_value("jimeng_endpoint_id", "JIMENG_ENDPOINT_ID")
 
-        if "jimeng_api_key" not in st.session_state:
-            st.session_state.jimeng_api_key = os.getenv("JIMENG_API_KEY", "")
-
-        if "jimeng_endpoint_id" not in st.session_state:
-            st.session_state.jimeng_endpoint_id = os.getenv("JIMENG_ENDPOINT_ID", "")
-
-        if "xhs_cookies" not in st.session_state:
-            st.session_state.xhs_cookies = os.getenv("XHS_COOKIES", "")
+    if "xhs_cookies" not in st.session_state:
+        st.session_state.xhs_cookies = get_config_value("xhs_cookies", "XHS_COOKIES")
 
     if "current_note" not in st.session_state:
         st.session_state.current_note: Optional[NoteData] = None
@@ -875,17 +889,17 @@ with st.container():
     col1, col2 = st.columns(2)
     with col1:
         if st.button("💾 保存配置", key="save_btn"):
-            if HAS_COOKIE_MANAGER and cookie_manager:
-                try:
-                    cookie_manager.set("deepseek_api_key", st.session_state.deepseek_api_key)
-                    cookie_manager.set("jimeng_api_key", st.session_state.jimeng_api_key)
-                    cookie_manager.set("jimeng_endpoint_id", st.session_state.jimeng_endpoint_id)
-                    cookie_manager.set("xhs_cookies", st.session_state.xhs_cookies)
-                    st.success("✓ 已保存到浏览器 Cookie！刷新页面也不会丢失。")
-                except Exception as e:
-                    st.error(f"保存失败: {e}")
+            # 保存到文件（本地持久化）
+            config = {
+                "deepseek_api_key": st.session_state.deepseek_api_key,
+                "jimeng_api_key": st.session_state.jimeng_api_key,
+                "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
+                "xhs_cookies": st.session_state.xhs_cookies,
+            }
+            if save_config_to_file(config):
+                st.success("✓ 已保存到本地文件！刷新页面也不会丢失。")
             else:
-                st.warning("Cookie 管理器不可用，配置仅保存在当前会话中")
+                st.error("保存失败，请检查文件权限")
 
     with col2:
         if st.button("🗑️ 清除", key="clear_btn"):
@@ -893,14 +907,12 @@ with st.container():
             st.session_state.jimeng_api_key = ""
             st.session_state.jimeng_endpoint_id = ""
             st.session_state.xhs_cookies = ""
-            if HAS_COOKIE_MANAGER and cookie_manager:
-                try:
-                    cookie_manager.delete("deepseek_api_key")
-                    cookie_manager.delete("jimeng_api_key")
-                    cookie_manager.delete("jimeng_endpoint_id")
-                    cookie_manager.delete("xhs_cookies")
-                except:
-                    pass
+            # 同时删除配置文件
+            try:
+                if os.path.exists(CONFIG_FILE):
+                    os.remove(CONFIG_FILE)
+            except:
+                pass
             st.success("✓ 已清除配置")
             st.rerun()
 
