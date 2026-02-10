@@ -22,13 +22,14 @@ class ImageGenerator(ABC):
     """
 
     @abstractmethod
-    def generate(self, prompt: str, count: int = 1) -> List[str]:
+    def generate(self, prompt: str, count: int = 1, size: str = "1920x1920", **kwargs) -> List[str]:
         """
         生成图片
 
         Args:
             prompt: 图片生成提示词
             count: 生成图片数量
+            size: 图片尺寸，格式 "宽x高"，如 "1920x1920"
 
         Returns:
             图片 URL 列表
@@ -78,13 +79,14 @@ class JimengGenerator(ImageGenerator):
             "Content-Type": "application/json"
         }
 
-    def generate(self, prompt: str, count: int = 1, reference_image: Optional[str] = None) -> List[str]:
+    def generate(self, prompt: str, count: int = 1, size: str = "1920x1920", reference_image: Optional[str] = None) -> List[str]:
         """
         使用火山引擎即梦 API 生成图片
 
         Args:
             prompt: 图片生成提示词
             count: 生成图片数量
+            size: 图片尺寸，格式 "宽x高"，如 "1920x1920"
             reference_image: 参考图片 URL（用于图生图）
 
         Returns:
@@ -100,7 +102,7 @@ class JimengGenerator(ImageGenerator):
         if not self.endpoint_id:
             raise ValueError("Endpoint ID 未配置，请在侧边栏设置火山引擎推理接入点 ID")
 
-        logger.info(f"即梦图片生成: prompt='{prompt}', count={count}")
+        logger.info(f"即梦图片生成: prompt='{prompt}', count={count}, size={size}")
 
         try:
             image_urls = []
@@ -113,7 +115,7 @@ class JimengGenerator(ImageGenerator):
                     "model": self.endpoint_id,  # 使用 endpoint_id 作为模型名称
                     "prompt": prompt,
                     "n": 1,  # 每次请求生成 1 张图片
-                    "size": "1920x1920"  # 图片尺寸 - 至少需要 3,686,400 像素
+                    "size": size  # 图片尺寸，格式 "宽x高"
                 }
 
                 # 如果提供了参考图片，添加到请求中（图生图）

@@ -1262,6 +1262,23 @@ if st.session_state.current_note:
                 label_visibility="collapsed"
             )
 
+            # 图片尺寸选择
+            aspect_ratio = st.selectbox(
+                "图片尺寸比例",
+                options=["1:1 (正方形)", "2:3 (竖版)", "3:4 (竖版)", "9:16 (手机全屏)", "16:9 (横版)"],
+                label_visibility="visible"
+            )
+
+            # 尺寸映射
+            size_map = {
+                "1:1 (正方形)": "1920x1920",
+                "2:3 (竖版)": "1280x1920",
+                "3:4 (竖版)": "1440x1920",
+                "9:16 (手机全屏)": "1080x1920",
+                "16:9 (横版)": "1920x1080"
+            }
+            selected_size = size_map[aspect_ratio]
+
             # 参考图片选择
             if note.images:
                 st.markdown("**参考图（可选）**")
@@ -1310,7 +1327,7 @@ if st.session_state.current_note:
                             )
 
                             reference_image = st.session_state.get("selected_reference_image")
-                            image_urls = generator.generate(image_prompt, count=1, reference_image=reference_image)
+                            image_urls = generator.generate(image_prompt, count=1, size=selected_size, reference_image=reference_image)
 
                             # 更新二创内容
                             if st.session_state.remixed_content:
