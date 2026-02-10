@@ -842,9 +842,186 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 使用 container 包裹配置面板，避免 key 冲突
-with st.container():
-    st.markdown('<div class="config-panel-container">', unsafe_allow_html=True)
+# 悬浮配置按钮
+col_btn, _ = st.columns([1, 10])
+with col_btn:
+    if "config_expanded" not in st.session_state:
+        st.session_state.config_expanded = False
+
+    if st.button("⚙️", key="config_toggle_btn", help="配置 API"):
+        st.session_state.config_expanded = not st.session_state.config_expanded
+        st.rerun()
+
+# 使用 expander 实现折叠面板
+if st.session_state.config_expanded:
+    with st.expander("🔑 API 配置", expanded=True):
+        # DeepSeek API Key
+        ds_key = st.text_input(
+            "DeepSeek API Key",
+            type="password",
+            value=st.session_state.get("deepseek_api_key", ""),
+            key="ds_api_input"
+        )
+        if ds_key != st.session_state.get("deepseek_api_key", ""):
+            st.session_state.deepseek_api_key = ds_key
+
+        # Jimeng API Key
+        jm_key = st.text_input(
+            "Jimeng API Key",
+            type="password",
+            value=st.session_state.get("jimeng_api_key", ""),
+            key="jm_api_input"
+        )
+        if jm_key != st.session_state.get("jimeng_api_key", ""):
+            st.session_state.jimeng_api_key = jm_key
+
+        # Jimeng Endpoint ID
+        jm_endpoint = st.text_input(
+            "Jimeng Endpoint ID",
+            value=st.session_state.get("jimeng_endpoint_id", ""),
+            key="jm_endpoint_input"
+        )
+        if jm_endpoint != st.session_state.get("jimeng_endpoint_id", ""):
+            st.session_state.jimeng_endpoint_id = jm_endpoint
+
+        # 小红书 Cookie (可选)
+        xhs_cookie = st.text_area(
+            "小红书 Cookie (可选)",
+            value=st.session_state.get("xhs_cookies", ""),
+            height=60,
+            key="xhs_cookie_input"
+        )
+        if xhs_cookie != st.session_state.get("xhs_cookies", ""):
+            st.session_state.xhs_cookies = xhs_cookie
+
+        # 保存和清除按钮
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 保存配置", key="save_btn"):
+                # 保存到文件（本地持久化）
+                config = {
+                    "deepseek_api_key": st.session_state.deepseek_api_key,
+                    "jimeng_api_key": st.session_state.jimeng_api_key,
+                    "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
+                    "xhs_cookies": st.session_state.xhs_cookies,
+                }
+                if save_config_to_file(config):
+                    st.success("✓ 已保存到本地文件！刷新页面也不会丢失。")
+                else:
+                    st.error("保存失败，请检查文件权限")
+
+        with col2:
+            if st.button("🗑️ 清除", key="clear_btn"):
+                st.session_state.deepseek_api_key = ""
+                st.session_state.jimeng_api_key = ""
+                st.session_state.jimeng_endpoint_id = ""
+                st.session_state.xhs_cookies = ""
+                # 同时删除配置文件
+                try:
+                    if os.path.exists(CONFIG_FILE):
+                        os.remove(CONFIG_FILE)
+                except:
+                    pass
+                st.success("✓ 已清除配置")
+                st.rerun()
+
+        # 状态指示
+        ds_ready = bool(st.session_state.get("deepseek_api_key", ""))
+        jm_ready = bool(st.session_state.get("jimeng_api_key", "") and st.session_state.get("jimeng_endpoint_id", ""))
+
+        st.markdown(f"""
+        <div style="display: flex; gap: 15px; margin-top: 12px; font-size: 11px;">
+            <span>DeepSeek: <span style="color: {'#10b981' if ds_ready else '#f59e0b'};">{'● 已配置' if ds_ready else '● 未配置'}</span></span>
+            <span>Jimeng: <span style="color: {'#10b981' if jm_ready else '#f59e0b'};">{'● 已配置' if jm_ready else '● 未配置'}</span></span>
+        </div>
+        """, unsafe_allow_html=True)
+
+# 旧代码备份
+# with st.container():
+#     st.markdown('<div class="config-panel-container">', unsafe_allow_html=True)
+#
+#     # DeepSeek API Key
+#     ds_key = st.text_input(
+#         "DeepSeek API Key",
+#         type="password",
+#         value=st.session_state.get("deepseek_api_key", ""),
+#         key="ds_api_input"
+#     )
+#     if ds_key != st.session_state.get("deepseek_api_key", ""):
+#         st.session_state.deepseek_api_key = ds_key
+#
+#     # Jimeng API Key
+#     jm_key = st.text_input(
+#         "Jimeng API Key",
+#         type="password",
+#         value=st.session_state.get("jimeng_api_key", ""),
+#         key="jm_api_input"
+#     )
+#     if jm_key != st.session_state.get("jimeng_api_key", ""):
+#         st.session_state.jimeng_api_key = jm_key
+#
+#     # Jimeng Endpoint ID
+#     jm_endpoint = st.text_input(
+#         "Jimeng Endpoint ID",
+#         value=st.session_state.get("jimeng_endpoint_id", ""),
+#         key="jm_endpoint_input"
+#     )
+#     if jm_endpoint != st.session_state.get("jimeng_endpoint_id", ""):
+#         st.session_state.jimeng_endpoint_id = jm_endpoint
+#
+#     # 小红书 Cookie (可选)
+#     xhs_cookie = st.text_area(
+#         "小红书 Cookie (可选)",
+#         value=st.session_state.get("xhs_cookies", ""),
+#         height=60,
+#         key="xhs_cookie_input"
+#     )
+#     if xhs_cookie != st.session_state.get("xhs_cookies", ""):
+#         st.session_state.xhs_cookies = xhs_cookie
+#
+#     # 保存和清除按钮
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         if st.button("💾 保存配置", key="save_btn"):
+#             # 保存到文件（本地持久化）
+#             config = {
+#                 "deepseek_api_key": st.session_state.deepseek_api_key,
+#                 "jimeng_api_key": st.session_state.jimeng_api_key,
+#                 "jimeng_endpoint_id": st.session_state.jimeng_endpoint_id,
+#                 "xhs_cookies": st.session_state.xhs_cookies,
+#             }
+#             if save_config_to_file(config):
+#                 st.success("✓ 已保存到本地文件！刷新页面也不会丢失。")
+#             else:
+#                 st.error("保存失败，请检查文件权限")
+#
+#     with col2:
+#         if st.button("🗑️ 清除", key="clear_btn"):
+#             st.session_state.deepseek_api_key = ""
+#             st.session_state.jimeng_api_key = ""
+#             st.session_state.jimeng_endpoint_id = ""
+#             st.session_state.xhs_cookies = ""
+#             # 同时删除配置文件
+#             try:
+#                 if os.path.exists(CONFIG_FILE):
+#                     os.remove(CONFIG_FILE)
+#             except:
+#                 pass
+#             st.success("✓ 已清除配置")
+#             st.rerun()
+#
+#     # 状态指示
+#     ds_ready = bool(st.session_state.get("deepseek_api_key", ""))
+#     jm_ready = bool(st.session_state.get("jimeng_api_key", "") and st.session_state.get("jimeng_endpoint_id", ""))
+#
+#     st.markdown(f"""
+#     <div style="display: flex; gap: 15px; margin-top: 12px; font-size: 11px;">
+#         <span>DeepSeek: <span style="color: {'#10b981' if ds_ready else '#f59e0b'};">{'● 已配置' if ds_ready else '● 未配置'}</span></span>
+#         <span>Jimeng: <span style="color: {'#10b981' if jm_ready else '#f59e0b'};">{'● 已配置' if jm_ready else '● 未配置'}</span></span>
+#     </div>
+#     """, unsafe_allow_html=True)
+#
+#     st.markdown('</div>', unsafe_allow_html=True)
 
     # DeepSeek API Key
     ds_key = st.text_input(
