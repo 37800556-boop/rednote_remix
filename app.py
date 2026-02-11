@@ -1326,8 +1326,23 @@ if st.session_state.current_note:
                                 endpoint_id=st.session_state.jimeng_endpoint_id
                             )
 
+                            # 判断是单张生成还是全部重新生成
                             reference_image = st.session_state.get("selected_reference_image")
-                            image_urls = generator.generate(image_prompt, count=1, size=selected_size, reference_image=reference_image)
+                            is_regenerate_all = reference_image is None and note.images
+
+                            if is_regenerate_all:
+                                # 全部重新生成：为每张原图生成对应的新图
+                                all_generated_urls = []
+                                total_count = len(note.images)
+                                for idx, ref_img in enumerate(note.images):
+                                    progress_msg = f"生成第 {idx + 1}/{total_count} 张..."
+                                    st.toast(progress_msg, icon="🎨")
+                                    image_urls = generator.generate(image_prompt, count=1, size=selected_size, reference_image=ref_img)
+                                    all_generated_urls.extend(image_urls)
+                                image_urls = all_generated_urls
+                            else:
+                                # 单张生成：使用选中的参考图或无参考图
+                                image_urls = generator.generate(image_prompt, count=1, size=selected_size, reference_image=reference_image)
 
                             # 更新二创内容
                             if st.session_state.remixed_content:
@@ -1340,7 +1355,7 @@ if st.session_state.current_note:
                                     style_used=RemixStyle(style_type="custom")
                                 )
 
-                        st.success("✓ 生成成功")
+                        st.success(f"✓ 成功生成 {len(image_urls)} 张图片")
                         st.rerun()
                     except Exception as e:
                         st.error(f"生成失败: {str(e)}")
